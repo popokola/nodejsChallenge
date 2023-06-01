@@ -2,7 +2,7 @@ const { Router } = require("express");
 const jwt = require("jsonwebtoken");
 const postmark = require("postmark");
 const { sendMailTest } = require("../libs/email");
-const emailProvider = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
+//const emailProvider = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
 
 
 module.exports = function (userService, factory) {
@@ -36,17 +36,6 @@ module.exports = function (userService, factory) {
     const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-
-
-    emailProvider.sendEmail({
-      "From": process.env.POSTMARK_FROM,
-      "To": user.email,
-      "Subject": "Email verification",
-      //"HtmlBody": "<html><body><h1>Click on the link below to verify your email</h1><a href='http://localhost:3000/users/verify/" + token + "'>Verify your email</a></body></html>",
-      "TextBody": "Click on the link below to verify your email http://localhost:3000/users/verify/" + token,
-      //"MessageStream": "outbound"
-    });
-   
 
     sendMailTest(
       "charles258@hotmail.fr", 
@@ -93,13 +82,11 @@ module.exports = function (userService, factory) {
     });
 
 
-    emailProvider.sendEmail({
-      "From": process.env.POSTMARK_FROM,
+    sendEmail({
       "To": "charles258@hotmail.fr", //user.email,
       "Subject": "Reset password",
       "HtmlBody": "<html><body><h1>Click on the link below to verify your email</h1><a href='http://localhost:3000/forgot-password/verify/" + token + "'>Verify your email</a></body></html>",
       "TextBody": "Click on the link below to verify your email http://localhost:3000/forgot-password/verify/" + token,
-      //"MessageStream": "outbound"
     });
 
     return res.json({ message: "Email sent" });

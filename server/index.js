@@ -9,11 +9,13 @@ const userService = require("./services/user");
 const productService = require("./services/product");
 const { cookieJwtAuth } = require("./middleware/cookieJwtAuth");
 const rateLimiter = require("./middleware/redisRateLimiter");
-const Logger = require("./libs/logger");
+const { expressWinston, logger } = require("./libs/logger");
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(expressWinston);
 app.use(rateLimiter.rateLimiter);
+app.use(require("./routes/uploader")());
 
 const ProviderFactory = require('./libs/providerFactory');
 const config = require('./config.json');
@@ -25,6 +27,7 @@ Object.entries(config).forEach(([provider, value]) => {
   factory.create(provider, client_id, client_secret, redirect_uri);
 });
 
+
 app.use(require("./routes/registration")(userService));
 app.use(require("./routes/security")(userService, factory));
 app.use("/products", cookieJwtAuth, new GenericRouter(new GenericController(productService)));
@@ -33,12 +36,12 @@ app.use("/users2", require("./routes/user"));
 app.use("/users", cookieJwtAuth, new GenericRouter(new GenericController(userService)));
 
 
-app.get("/", rateLimiter.rateLimiter, (req, res) => {
+app.get("/", (req, res) => {
+  logger.info("Hello world");
   res.send("Hello world");
 });
 
 app.post("/", (req, res) => {
-  Logger.info("Hello world");
   res.json(req.body);
 });
 
