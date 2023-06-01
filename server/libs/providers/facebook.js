@@ -1,4 +1,4 @@
-const Provider = require('./Provider');
+const Provider = require('./provider');
 
 class Facebook extends Provider{
   constructor(client_id, client_secret, redirect_uri) {

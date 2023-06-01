@@ -1,4 +1,4 @@
-const Provider = require('./Provider');
+const Provider = require('./provider');
 
 class Discord extends Provider {
   constructor(client_id, client_secret, redirect_uri) {

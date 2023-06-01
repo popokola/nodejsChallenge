@@ -1,26 +1,51 @@
+const expressWinston = require('express-winston');
 const winston = require('winston');
+require('winston-mongodb');
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
+const { createLogger, format, transports } = require('winston');
+const { combine, timestamp, label, printf } = format;
+
+const myFormat = printf(({ level, message, timestamp }) => {
+  return `${timestamp} [${level}] [${process.pid}] ${message}}`;
+});
+
+const myLogFormat = printf(({ level, message, metadata }) => {
+  const timestamp = new Date().toISOString();
+  return `${timestamp} [${level}] [${process.pid}] ${message} ${metadata ? JSON.stringify(metadata) : ''}`;
+});
+
+const logger = createLogger({
+  format: combine(
+    //format.colorize(),
+    timestamp(),
+    myFormat
+  ),
   transports: [
-    //
-    // - Write all logs with importance level of `error` or less to `error.log`
-    // - Write all logs with importance level of `info` or less to `combined.log`
-    //
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
+    new winston.transports.Console({format: format.combine(format.colorize(), myFormat)}),
   ],
 });
 
-//
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-//
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(winston.format.simple(), winston.format.colorize(), winston.format.timestamp()),
-  }));
-}
 
-module.exports = logger;
+const expressLogger = expressWinston.logger({
+  transports: [
+    new winston.transports.MongoDB({
+      db: process.env.MONGODB_URI,
+      options: { useUnifiedTopology: true },
+      format: winston.format.combine(format.json(), format.timestamp(), format.metadata()),
+      collection: 'logs',
+      level: 'warn',
+    }),
+
+    new winston.transports.File({ filename: '../logs/combined.log', level: 'info' }),
+    new winston.transports.File({ filename: '../logs/error.log', level: 'error' }),
+  ],
+
+  format: winston.format.combine(format.metadata(), myLogFormat),
+
+  statusLevels: true,
+});
+
+module.exports = {
+  expressWinston: expressLogger,
+  logger
+};
