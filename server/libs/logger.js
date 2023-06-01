@@ -1,16 +1,23 @@
+require("dotenv").config({ path: "../.env"});
 const expressWinston = require('express-winston');
 const winston = require('winston');
 require('winston-mongodb');
+const path = require("path");
 
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, label, printf } = format;
 
 const myFormat = printf(({ level, message, timestamp }) => {
-  return `${timestamp} [${level}] [${process.pid}] ${message}}`;
+  return `${timestamp} [${level}] [${process.pid}] ${message}`;
 });
 
 const myLogFormat = printf(({ level, message, metadata }) => {
-  const timestamp = new Date().toISOString();
+  const timestamp = //get the Paris timezone date
+    new Date().toLocaleString("fr-FR", {
+      timeZone: "Europe/Paris",
+      }
+      );
+
   return `${timestamp} [${level}] [${process.pid}] ${message} ${metadata ? JSON.stringify(metadata) : ''}`;
 });
 
@@ -36,8 +43,8 @@ const expressLogger = expressWinston.logger({
       level: 'warn',
     }),
 
-    new winston.transports.File({ filename: '../logs/combined.log', level: 'info' }),
-    new winston.transports.File({ filename: '../logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: path.join(__dirname, "..", "logs/combined.log"), level: 'info' }),
+    new winston.transports.File({ filename: path.join(__dirname, "..", "logs/error.log"), level: 'error' }),
   ],
 
   format: winston.format.combine(format.metadata(), myLogFormat),

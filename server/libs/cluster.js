@@ -1,8 +1,7 @@
-require("dotenv").config({ path: "../.env"});
 const cluster = require("cluster");
 const os = require("os");
 const path = require("path");
-const { logger } = require("./logger");
+const { logger, expressWinston } = require("./logger");
 
 
 const cpuCount = os.cpus().length;
