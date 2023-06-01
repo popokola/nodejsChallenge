@@ -1,0 +1,22 @@
+{
+    "facebook" : {
+        "client_id" : "364225935681947",
+        "client_secret" : "d5dc80c041c27320961fee6c12104749",
+        "redirect_uri" : "http://localhost:3000/callback"
+    },
+    "google" : {
+        "client_id" : "800942571300-3986o1l1kiihl40roqnhnbkuad9bc9ir.apps.googleusercontent.com",
+        "client_secret" : "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",
+        "redirect_uri" : "http://localhost:3000/callback"
+    },
+    "spotify" : {
+        "client_id" : "75126d4175d545a8a82fce10cad9588a",
+        "client_secret" : "048bed7e66e44fa6b436536118baa7ad",
+        "redirect_uri" : "http://localhost:3000/callback"
+    },
+    "discord" : {
+        "client_id" : "996530065238139020",
+        "client_secret" : "nE2O09OXtTcOJhsC6aQYnN2QzzYQjWG4",
+        "redirect_uri" : "http://localhost:3000/callback"
+    }
+}
