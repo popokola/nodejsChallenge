@@ -1,5 +1,6 @@
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const uuid = require("uuid").v4;
+const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
 
 exports.s3Uploadv3 = async (files) => {
   const s3client = new S3Client();
@@ -11,6 +12,7 @@ exports.s3Uploadv3 = async (files) => {
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: `uploads/${uuid()}.${mimetype.split("/")[1]}`,
       Body: file.buffer,
+      ContentType: file.mimetype,
     };
   });
 
@@ -21,13 +23,23 @@ exports.s3Uploadv3 = async (files) => {
 
   const uploadResults = await Promise.all(uploadPromises);
 
-  const publicUrls = uploadResults.map((result, index) => ({
-    Location: `https://${ process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${params[index].Key}`,
-    ETag: result.ETag,
-    ServerSideEncryption: result.ServerSideEncryption,
-  }));
+  try {
+    const publicUrls = uploadResults.map((result, index) => ({
+      Location: getSignedUrl({
+        url: `https://d20qjuy7xukb2n.cloudfront.net/${params[index].Key}`,
+        method: "GET",
+        dateLessThan: new Date(Date.now() + 60 * 60 * 1000), // the URL will expire after 1 hour
+        privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
+        keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
+      }),
+      ETag: result.ETag,
+      ServerSideEncryption: result.ServerSideEncryption,
+    }));
 
-  return publicUrls;
+    return publicUrls;
+  } catch (error) {
+    console.log(error);
+  }
 
   /*
   return await Promise.all(
