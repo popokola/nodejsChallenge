@@ -27,7 +27,7 @@ exports.s3Uploadv3 = async (files) => {
   try {
     const publicUrls = uploadResults.map((result, index) => ({
       Location: getSignedUrl({
-        url: `https://d20qjuy7xukb2n.cloudfront.net/uploads/${params[index].Key}`,
+        url: `https://d20qjuy7xukb2n.cloudfront.net/${params[index].Key}`,
         method: "GET",
         dateLessThan: new Date(Date.now() + 60 * 60 * 1000), // the URL will expire after 1 hour
         privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,

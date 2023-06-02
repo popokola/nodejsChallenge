@@ -1,7 +1,18 @@
 const express = require("express");
 require("dotenv").config();
+const http2 = require("http2");
+const fs = require("fs");
+const http2Express = require('http2-express-bridge')
+const path = require("path");
 
-const app = express();
+const app = http2Express(express);
+const server = http2.createSecureServer({
+  key: fs.readFileSync(path.join(__dirname, "private.pem")),
+  cert: fs.readFileSync(path.join(__dirname,  "cert.pem")),
+  allowHTTP1: true,
+}, app);
+
+
 const cookieParser = require("cookie-parser");
 const GenericRouter = require("./routes/genericCRUD");
 const GenericController = require("./controllers/genericCRUD");
@@ -10,6 +21,7 @@ const productService = require("./services/product");
 const { cookieJwtAuth } = require("./middleware/cookieJwtAuth");
 const rateLimiter = require("./middleware/redisRateLimiter");
 const { expressWinston, logger } = require("./libs/logger");
+const sse = require("./libs/sse");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -28,6 +40,8 @@ Object.entries(config).forEach(([provider, value]) => {
 });
 
 
+//app.use(require("./routes/sse")());
+app.use(sse());
 app.use(require("./routes/registration")(userService));
 app.use(require("./routes/security")(userService, factory));
 app.use("/products", cookieJwtAuth, new GenericRouter(new GenericController(productService)));
@@ -35,6 +49,9 @@ app.use("/products", cookieJwtAuth, new GenericRouter(new GenericController(prod
 app.use("/users2", require("./routes/user"));
 app.use("/users", cookieJwtAuth, new GenericRouter(new GenericController(userService)));
 
+app.get("/sse", (req, res) => {
+    res.sseSetup();
+});
 
 app.get("/", (req, res) => {
   logger.info("Hello world");
@@ -45,6 +62,10 @@ app.post("/", (req, res) => {
   res.json(req.body);
 });
 
+app.get("/test", (req, res) => {
+  res.send("Hello world");
+  res.sendSSE({id: process.pid, name: "test"}, "test");
+});
 
 app.get('/callback', async (req, res) => {
   const state = req.query.state;
@@ -57,6 +78,5 @@ app.get('/callback', async (req, res) => {
   res.json(result);
 });
 
-//console.log(factory.getProviders());
-
-app.listen(3000, () => console.log("Server started on port 3000"));
+//app.listen(3000, () => console.log("Server started on port 3000"));
+server.listen(8443, () => console.log("Server started on port 8443"));
