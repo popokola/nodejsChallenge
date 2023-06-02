@@ -1,18 +1,20 @@
 let connexions = new Set();
 let currentId = 0;
+const cluster = require("cluster");
 
 function sse() {
   return function (req, res, next) {
     res.sseSetup = function () {
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-      });
+     
       if (req.httpVersionMajor === 1) {
         res.setHeader('Connection', 'keep-alive');
       }
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
     
       connexions.add(res);
+      
 
       const intervalId = setInterval(() => {
         res.write(':\n\n');
