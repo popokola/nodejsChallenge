@@ -1,4 +1,4 @@
-const connexions = new Set();
+let connexions = new Set();
 let currentId = 0;
 
 function sse() {
@@ -7,9 +7,11 @@ function sse() {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
       });
-
+      if (req.httpVersionMajor === 1) {
+        res.setHeader('Connection', 'keep-alive');
+      }
+    
       connexions.add(res);
 
       const intervalId = setInterval(() => {
