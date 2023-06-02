@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const multer = require("multer");
-const { s3Uploadv3 } = require("../libs/bucket");
+const { s3Uploadv3, s3Delete, s3GetSignedUrl } = require("../libs/bucket");
 const { logger } = require("../libs/logger");
 const uuid = require("uuid").v4;
 
@@ -24,7 +24,18 @@ module.exports = function () {
     limits: { fileSize: 1000000000, files: 2 },
   });
 
-  router.post("/upload", upload.array("file"), async (req, res) => {
+  router.get("/signedUrl/:id", async (req, res) => {
+    try {
+      const url = await s3GetSignedUrl(req.params.id);
+      return res.json({ status: "success", url });
+    } catch (err) {
+      logger.error(err);
+      console.log(err);
+    }
+  });
+  
+
+  router.post("/uploads", upload.array("file"), async (req, res) => {
     try {
       const results = await s3Uploadv3(req.files);
      
@@ -34,6 +45,18 @@ module.exports = function () {
       console.log(err);
     }
   });
+
+  router.delete("/uploads/:id", async (req, res) => {
+
+    //delete from s3
+    try {
+      const results = await s3Delete(req.params.id);
+      return res.json({  results });
+    } catch (err) {
+      logger.error(err);
+      console.log(err);
+    }
+  })
 
   router.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
@@ -56,6 +79,7 @@ module.exports = function () {
       }
     }
   });
+
 
   return router;
 };
