@@ -1,34 +1,39 @@
+const Redis = require('ioredis');
+
 let connexions = new Set();
 let currentId = 0;
-//const { redis } = require("./redis");
-const Redis = require('ioredis');
+let redisSubscriber = null;
+let redisPublisher = new Redis(process.env.REDIS_CONN_URl);
 
 function sse() {
   return function (req, res, next) {
-    const redisSubscriber = new Redis(process.env.REDIS_CONN_URl);
     res.sseSetup = function () {
-
       if (req.httpVersionMajor === 1) {
         res.setHeader('Connection', 'keep-alive');
       }
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
-    
+
       connexions.add(res);
 
-      // Create a new Redis subscriber
-      redisSubscriber.subscribe('my-channel');
+      if (!redisSubscriber) {
+        // Create a new Redis subscriber only if it doesn't exist
+        redisSubscriber = new Redis(process.env.REDIS_CONN_URl);
 
-  
-      
-      // Event listener for receiving messages from Redis
-      redisSubscriber.on('message', (channel, message) => {
-        // Send the message to the client through SSE
-        res.write(`data: ${message}\n\n`);
-      });
-    
-      
+        // Event listener for receiving messages from Redis
+        redisSubscriber.on('message', (channel, message) => {
+          // Send the message to the client through SSE
+          connexions.forEach((conn) => {
+            conn.write(`data: ${message}\n\n`);
+          });
+        });
+      }
+
+      const channel = 'my-channel';
+
+      // Subscribe to the Redis channel
+      redisSubscriber.subscribe(channel);
 
       const intervalId = setInterval(() => {
         res.write(':\n\n');
@@ -38,30 +43,26 @@ function sse() {
         clearInterval(intervalId);
         res.end();
         connexions.delete(res);
-        redisSubscriber.unsubscribe('my-channel');
-        redisSubscriber.quit();
+        if (connexions.size === 0) {
+          redisSubscriber.unsubscribe(channel);
+          redisSubscriber.quit();
+          redisSubscriber = null;
+        }
       });
     };
 
     res.sendSSE = function (data, eventName) {
+      const messageObject = {
+        id: currentId++,
+        data,
+        nbConnexions: connexions.size,
+        event: eventName
+      };
 
-        const dataString = 
-            `id: ${currentId++}\n` +
-            `data: ${JSON.stringify(data)}\n` +
-            `nbConnexions: ${connexions.size}\n` +
-            (eventName ? `event: ${eventName}\n\n` : '\n');
+      const messageString = JSON.stringify(messageObject);
 
-
-            /*
-        connexions.forEach(conn => {
-            conn.write(dataString);
-        });
-        */
-
-        //const redisClient = new Redis("redis://default:4d00078dc5394b76adda92cdb360b653@eu2-suitable-shrimp-31405.upstash.io:31405");
-        redisSubscriber.publish('my-channel', JSON.stringify(dataString));
-      
-        redisSubscriber.quit();
+      // Publish the message to the Redis channel using the publisher instance
+      redisPublisher.publish('my-channel', messageString);
     };
 
     next();

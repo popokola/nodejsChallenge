@@ -1,4 +1,4 @@
 .env
 config.js
-./logs/*
+logs/*
 node_modules
