@@ -62,9 +62,12 @@ app.post("/", (req, res) => {
   res.json(req.body);
 });
 
-app.get("/test", (req, res) => {
+app.get("/test", async (req, res) => {
   res.send("Hello world");
-  res.sendSSE({id: process.pid, name: "test"}, "test");
+  const response = await fetch('https://zenquotes.io/api/random');
+  const data = await response.json();
+  const quote = data[0].q;
+  res.sendSSE({id: process.pid, name: quote } );
 });
 
 app.get('/callback', async (req, res) => {
@@ -80,3 +83,5 @@ app.get('/callback', async (req, res) => {
 
 //app.listen(3000, () => console.log("Server started on port 3000"));
 server.listen(8443, () => console.log("Server started on port 8443"));
+
+process.send({ event: 'server', server: server });
