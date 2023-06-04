@@ -83,5 +83,3 @@ app.get('/callback', async (req, res) => {
 
 //app.listen(3000, () => console.log("Server started on port 3000"));
 server.listen(8443, () => console.log("Server started on port 8443"));
-
-process.send({ event: 'server', server: server });
