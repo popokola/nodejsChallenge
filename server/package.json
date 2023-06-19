@@ -8,7 +8,7 @@
     "prod": "cd libs && node cluster.js",
     "dev": "nodemon index.js",
     "seed": "node seeds/seed.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test",
     "d:s:u": "node ./migrate.js"
   },
   "author": "",
