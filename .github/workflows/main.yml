@@ -31,7 +31,7 @@ jobs:
           node-version: 20.x
       - name: Waiting for Postgres to start
         run: |
-          until pg_isready -h postgres -p 5432 -U "postgres"; do
+          until PGPASSWORD="postgres" pg_isready -h localhost -p 5432 -U "postgres"; do
             sleep 1;
           done
       - name: Seed the database
