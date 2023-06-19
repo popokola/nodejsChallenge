@@ -62,6 +62,9 @@ app.post("/", (req, res) => {
   res.json(req.body);
 });
 
+const userServicetest = require('./services/userTest');
+app.use('api/user', new GenericRouter(new GenericController(userServicetest)));
+
 app.get("/test", async (req, res) => {
   res.send("Hello world");
   const response = await fetch('https://zenquotes.io/api/random');
