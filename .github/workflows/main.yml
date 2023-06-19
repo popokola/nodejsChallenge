@@ -35,8 +35,8 @@ jobs:
             sleep 1;
           done
       - name: Seed the database
-        run: npm run seed
+        run: cd server && npm run seed
       - name: Install dependencies
-        run: npm install
+        run: cd server && npm install
       - name: Run tests
-        run: npm test
+        run: cd server && npm test
