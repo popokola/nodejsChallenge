@@ -34,9 +34,9 @@ jobs:
           until PGPASSWORD="postgres" pg_isready -h localhost -p 5432 -U "postgres"; do
             sleep 1;
           done
-      - name: Seed the database
-        run: cd server && npm run seed
       - name: Install dependencies
         run: cd server && npm install
+      - name: Seed the database
+        run: cd server && npm run seed
       - name: Run tests
         run: cd server && npm test
