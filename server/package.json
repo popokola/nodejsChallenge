@@ -8,7 +8,7 @@
     "prod": "cd libs && node cluster.js",
     "dev": "nodemon index.js",
     "seed": "node seeds/seed.js",
-    "test": "npm run test",
+    "test": "jest",
     "d:s:u": "node ./migrate.js"
   },
   "author": "",
@@ -30,7 +30,6 @@
     "http2": "^3.3.7",
     "http2-express-bridge": "^1.0.7",
     "ioredis": "^5.3.2",
-    "jest": "^29.5.0",
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.0",
@@ -42,6 +41,7 @@
     "winston-mongodb": "^5.1.1"
   },
   "devDependencies": {
+    "jest": "^29.5.0",
     "loadtest": "^5.2.0",
     "nodemon": "^2.0.22"
   }
