@@ -49,9 +49,14 @@ app.use("/products", cookieJwtAuth, new GenericRouter(new GenericController(prod
 app.use("/users2", require("./routes/user"));
 app.use("/users", cookieJwtAuth, new GenericRouter(new GenericController(userService)));
 
+
 const Redis = require('ioredis');
-let redisSubscriber = null;
+const sseConnections = new Map();
+const redisSubscriber = new Redis(process.env.REDIS_CONN_URl);
+const channel = 'orders';
+
 app.get("/sse/:id", (req, res) => {
+  const channelId = req.params.id;
 
   if (req.httpVersionMajor === 1) {
     res.setHeader('Connection', 'keep-alive');
@@ -59,47 +64,74 @@ app.get("/sse/:id", (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
 
+  const intervalId = setInterval(() => {
+    res.write(':\n\n');
+  }, 1000);
+
+  const messageListener = (receivedChannel, message) => {
+    const messageObject = JSON.parse(message);
+    if (messageObject.userId == channelId) {
+      res.write(`data: ${message}\n\n`);
+    }
+  };
+
+  redisSubscriber.on('message', messageListener);
+  redisSubscriber.subscribe(channel);
+
+  sseConnections.set(res, { channelId, messageListener });
+
+  res.on('close', () => {
+    clearInterval(intervalId);
+    res.end();
+
+    const connectionData = sseConnections.get(res);
+    if (connectionData) {
+      redisSubscriber.removeListener('message', connectionData.messageListener);
+      sseConnections.delete(res);
+
+      // Unsubscribe from the Redis channel if there are no active SSE connections for the channelId
+      if (!hasActiveConnections(channelId)) {
+        redisSubscriber.unsubscribe(channel);
+      }
+    }
+  });
+});
+
+function hasActiveConnections(channelId) {
+  for (const [_, connectionData] of sseConnections) {
+    if (connectionData.channelId === channelId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+
+/*
+const { createRedisSubscriber, subscribeToChannel, registerMessageListener, registerCloseHandler } = require('./libs/pub');
+app.get("/sse/:id", (req, res) => {
+  if (req.httpVersionMajor === 1) {
+    res.setHeader('Connection', 'keep-alive');
+  }
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
 
   const intervalId = setInterval(() => {
     res.write(':\n\n');
   }, 1000);
 
-  if (!redisSubscriber) {
-    redisSubscriber = new Redis(process.env.REDIS_CONN_URl);
-
-    // Event listener for receiving messages from Redis
-    redisSubscriber.on('message', (channel, message) => {
-      // Send the message to the client through SSE
-      const messageObject = JSON.parse(message);
-      console.log(messageObject, req.params.id);
-
-      if (messageObject.userId == req.params.id) {
-        console.log( req.params.id, messageObject);
-        res.write(`data: ${message}\n\n`);
-
-      }
-
-        
-    });
-  }
-
-
-  // Subscribe to the Redis channel
+  const channelId = req.params.id;
+  const redisSubscriber = createRedisSubscriber(channelId, res);
   const channel = 'orders';
-
-  // Subscribe to the Redis channel
-  redisSubscriber.subscribe(channel);  
-
-
-  res.on('close', () => {
-    clearInterval(intervalId);
-    res.end();
-    redisSubscriber.unsubscribe(channel);
-    redisSubscriber.quit();
-    redisSubscriber = null;
-  });
-
+  subscribeToChannel(redisSubscriber, channel);
+  registerMessageListener(redisSubscriber, channel, channelId, res, intervalId);
+  registerCloseHandler(redisSubscriber, channel, res, intervalId);
 });
+*/
+
+
 
 app.get("/", (req, res) => {
   logger.info("Hello world");
@@ -110,7 +142,7 @@ app.post("/", (req, res) => {
   res.json(req.body);
 });
 
-
+//const Redis = require("ioredis");
 app.get("/test", async (req, res) => {
   let redisPublisher = new Redis(process.env.REDIS_CONN_URl);
   res.send("Hello world");
