@@ -137,8 +137,9 @@
 <script setup>
   import { SearchIcon, ShoppingBagIcon } from '@heroicons/vue/outline';
   import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
-  import { computed, ref } from 'vue';
+  import { computed, ref, watch } from 'vue';
   import { useCartStore } from '@/store/cart';
+  import { useProductStore } from '@/store/product';
   import Fuse from 'fuse.js';
 
   const showEmptyCartPopover = ref(false);
@@ -151,7 +152,7 @@
 
   const cartStore = useCartStore();
   const cartItemCount = computed(() => cartStore.cartItemCount);
-  const cartItems = computed(() => cartStore.getCartItems());
+  const cartItems = computed(() => cartStore.getCartItems);
 
   const removeFromCart = (productId, quantityToRemove) => {
     cartStore.removeFromCart(productId, quantityToRemove);
@@ -183,24 +184,22 @@
     cartStore.updateCartItemQuantity(productId, quantity);
   };
 
+  const showModal = ref(false);
   const searchQuery = ref('');
-  const products = computed(() => cartStore.products);
-  const filteredProducts = computed(() => {
-    // Create a new instance of Fuse
-    const fuse = new Fuse(products.value, {
-      keys: ['name', 'description', 'category'],
+
+  const products = useProductStore().products;
+  const fuse = new Fuse(products, {
+      keys: ['name'],
       threshold: 0.3,
-    });
-
-    // Perform the search
+  });
+  const filteredProducts = ref([]);
+  watch(searchQuery, () => {
     const result = fuse.search(searchQuery.value);
-
-    // Return the search results
-    return result.map((item) => item.item);
+    openModal();
+    filteredProducts.value = result.map((item) => item.item);
   });
 
 
-  const showModal = ref(false);
   const openModal = () => {
     showModal.value = true;
   };
