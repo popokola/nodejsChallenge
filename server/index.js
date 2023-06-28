@@ -22,6 +22,7 @@ const { cookieJwtAuth } = require("./middleware/cookieJwtAuth");
 const rateLimiter = require("./middleware/redisRateLimiter");
 const { expressWinston, logger } = require("./libs/logger");
 const sse = require("./libs/sse");
+const cheerio = require("cheerio");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -109,6 +110,9 @@ app.get("/", (req, res) => {
 app.post("/", (req, res) => {
   res.json(req.body);
 });
+
+
+app.get('/convert', require('./controllers/convert').currencyController);
 
 
 app.get("/test", async (req, res) => {
