@@ -2,7 +2,17 @@ const fs = require("fs");
 const path = require("path");
 const Sequelize = require("sequelize");
 
-const connection = new Sequelize(process.env.DATABASE_URL);
+if (process.env.NODE_ENV === "test") {
+  const { database } = require("../tests/testConfig");
+  connection = new Sequelize({
+    dialect: "sqlite",
+    storage: database,
+  });
+} else {
+  console.log(process.env.DATABASE_URL);
+  connection = new Sequelize(process.env.DATABASE_URL);
+}
+
 const db = {
   connection,
 };

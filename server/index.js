@@ -4,6 +4,7 @@ const http2 = require("http2");
 const fs = require("fs");
 const http2Express = require('http2-express-bridge')
 const path = require("path");
+const port = process.env.PORT || 8443;
 
 const app = http2Express(express);
 const server = http2.createSecureServer({
@@ -50,7 +51,7 @@ app.use("/products", cookieJwtAuth, new GenericRouter(new GenericController(prod
 app.use("/users2", require("./routes/user"));
 app.use("/users", cookieJwtAuth, new GenericRouter(new GenericController(userService)));
 
-
+/*
 const Redis = require('ioredis');
 const sseConnections = new Map();
 const redisSubscriber = new Redis(process.env.REDIS_CONN_URl);
@@ -107,7 +108,7 @@ function hasActiveConnections(channelId) {
   return false;
 }
 
-
+*/
 
 
 /*
@@ -137,10 +138,6 @@ app.get("/sse/:id", (req, res) => {
 app.get("/", (req, res) => {
   logger.info("Hello world");
   res.send("Hello world");
-});
-
-app.post("/", (req, res) => {
-  res.json(req.body);
 });
 
 
@@ -179,4 +176,10 @@ app.get('/callback', async (req, res) => {
 });
 
 //app.listen(3000, () => console.log("Server started on port 3000"));
-server.listen(8443, () => console.log("Server started on port 8443"));
+//server.listen(8443, () => console.log("Server started on port 8443"));
+
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(8443, () => console.log("Server started on port 8443"));
+}
+
+module.exports = app;
