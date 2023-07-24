@@ -179,7 +179,7 @@ app.get('/callback', async (req, res) => {
 //server.listen(8443, () => console.log("Server started on port 8443"));
 
 if (process.env.NODE_ENV !== 'test') {
-  server.listen(8443, () => console.log("Server started on port 8443"));
+  server.listen(port, () => console.log(`Server started on port ${port}`));
 }
 
 module.exports = app;

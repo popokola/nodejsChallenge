@@ -1,0 +1,24 @@
+version: '3.8' 
+
+services:
+  payment-api:
+    build:
+      context: ./payment/server  # Correct the context path to the directory containing Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${PORT}"  # Use the PORT environment variable for dynamic port mapping
+    env_file:
+      - .env  # Load environment variables from the .env file
+    container_name: payment-api
+  payment-front:
+    build:
+      context: ./payment/client  # Correct the context path to the directory containing Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - "${PAYMENT_FRONT_PORT}:${PAYMENT_FRONT_PORT}"  # Use the PORT environment variable for dynamic port mapping
+    env_file:
+      - .env  # Load environment variables from the .env file
+    container_name: payment-front
+   
+  
+
